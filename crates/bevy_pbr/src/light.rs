@@ -73,6 +73,7 @@ impl DirectionalLight {
     ///
     /// # Panics
     /// Will panic if `direction` is not normalized.
+    #[track_caller]
     pub fn new(color: Color, intensity: f32, direction: Vec3) -> Self {
         assert!(direction.is_normalized(), "Light direction vector should have been normalized.");
         DirectionalLight {
@@ -86,6 +87,7 @@ impl DirectionalLight {
     ///
     /// # Panics
     /// Will panic if `direction` is not normalized.
+    #[track_caller]
     pub fn set_direction(&mut self, direction: Vec3) {
         assert!(direction.is_normalized(), "Light direction vector should have been normalized.");
         self.direction = direction;
