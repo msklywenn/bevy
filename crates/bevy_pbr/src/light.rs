@@ -1,5 +1,6 @@
 use bevy_core::Byteable;
 use bevy_ecs::reflect::ReflectComponent;
+use bevy_math::Vec3;
 use bevy_reflect::Reflect;
 use bevy_render::color::Color;
 use bevy_transform::components::GlobalTransform;
@@ -49,6 +50,86 @@ impl PointLightUniform {
             color,
             light_params: [1.0 / (light.range * light.range), light.radius, 0.0, 0.0],
         }
+    }
+}
+
+/// A Directional light.
+///
+/// Directional lights don't exist in reality but they are a good
+/// approximation for light sources VERY far away, like the sun or
+/// the moon.
+///
+/// An `intensity` of 100000.0 is a good start for a sunlight.
+#[derive(Debug, Reflect)]
+#[reflect(Component)]
+pub struct DirectionalLight {
+    pub color: Color,
+    pub intensity: f32,
+    direction: Vec3,
+}
+
+impl DirectionalLight {
+    /// Create a new directional light component.
+    ///
+    /// # Panics
+    /// Will panic if `direction` is not normalized.
+    pub fn new(color: Color, intensity: f32, direction: Vec3) -> Self {
+        assert!(direction.is_normalized(), "Light direction vector should have been normalized.");
+        DirectionalLight {
+            color,
+            intensity,
+            direction,
+        }
+    }
+
+    /// Set direction of light.
+    ///
+    /// # Panics
+    /// Will panic if `direction` is not normalized.
+    pub fn set_direction(&mut self, direction: Vec3) {
+        assert!(direction.is_normalized(), "Light direction vector should have been normalized.");
+        self.direction = direction;
+    }
+
+    pub fn get_direction(&self) -> Vec3 {
+        self.direction
+    }
+}
+
+impl Default for DirectionalLight {
+    fn default() -> Self {
+        DirectionalLight {
+            color: Color::rgb(1.0, 1.0, 1.0),
+            intensity: 100000.0,
+            direction: Vec3::new(0.0, -1.0, 0.0),
+        }
+    }
+}
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct DirectionalLightUniform {
+    pub dir: [f32; 4],
+    pub color: [f32; 4],
+}
+
+unsafe impl Byteable for DirectionalLightUniform {}
+
+impl DirectionalLightUniform {
+    pub fn from(light: &DirectionalLight) -> DirectionalLightUniform {
+        // direction is negated to be ready for N.L
+        let dir: [f32; 4] = [
+            -light.direction.x,
+            -light.direction.y,
+            -light.direction.z,
+            0.0,
+        ];
+
+        // premultiply color by intensity
+        // we don't use the alpha at all, so no reason to multiply only [0..3]
+        let color: [f32; 4] = (light.color * light.intensity).into();
+
+        DirectionalLightUniform { dir, color }
     }
 }
 
