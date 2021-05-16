@@ -100,7 +100,6 @@ pub trait SmoothDampFunctions {
 macro_rules! impl_smooth_damp {
     ($t:ty, $f:ty, $clamp:expr) => {
         impl SmoothDampFunctions for $t {
-            #[track_caller]
             #[inline]
             fn smooth_damp(
                 from: $t,
@@ -128,7 +127,6 @@ macro_rules! impl_smooth_damp {
                 }
             }
 
-            #[track_caller]
             #[inline]
             fn smooth_damp_max(
                 from: $t,
